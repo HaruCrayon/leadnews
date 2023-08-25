@@ -7,7 +7,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PageRequestDto {
 
+    /**
+     * 每页显示条数
+     */
     protected Integer size;
+
+    /**
+     * 当前页
+     */
     protected Integer page;
 
     public void checkParam() {

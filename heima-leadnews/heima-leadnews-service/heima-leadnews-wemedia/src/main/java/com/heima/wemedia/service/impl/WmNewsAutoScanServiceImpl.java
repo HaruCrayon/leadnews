@@ -57,22 +57,20 @@ public class WmNewsAutoScanServiceImpl implements WmNewsAutoScanService {
         }
 
         if (wmNews.getStatus().equals(WmNews.Status.SUBMIT.getCode())) {
-
             //从内容中提取纯文本内容和图片
             Map<String, Object> textAndImages = handleTextAndImages(wmNews);
-
-            //自管理的敏感词过滤
-            boolean isSensitive = handleSensitiveScan((String) textAndImages.get("content"), wmNews);
-            if (!isSensitive) {
-                return;
-            }
-
 
             //2.审核文本内容  阿里云接口
 //            boolean isTextScan = handleTextScan((String) textAndImages.get("content"), wmNews);
 //            if (!isTextScan) {
 //                return;
 //            }
+
+            //自管理的敏感词过滤
+            boolean isSensitive = handleSensitiveScan((String) textAndImages.get("content"), wmNews);
+            if (!isSensitive) {
+                return;
+            }
 
             //3.审核图片  阿里云接口，图片识别文字
             boolean isImageScan = handleImageScan((List<String>) textAndImages.get("images"), wmNews);
@@ -88,7 +86,6 @@ public class WmNewsAutoScanServiceImpl implements WmNewsAutoScanService {
             //回填article_id
             wmNews.setArticleId((Long) responseResult.getData());
             updateWmNews(wmNews, (short) 9, "审核成功");
-
         }
     }
 
@@ -140,7 +137,7 @@ public class WmNewsAutoScanServiceImpl implements WmNewsAutoScanService {
      *
      * @param wmNews
      */
-    private ResponseResult saveAppArticle(WmNews wmNews) {
+    public ResponseResult saveAppArticle(WmNews wmNews) {
 
         ArticleDto dto = new ArticleDto();
         //属性的拷贝
