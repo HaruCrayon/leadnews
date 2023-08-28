@@ -1,4 +1,4 @@
-package com.heima.behavior.interceptor;
+package com.heima.article.interceptor;
 
 import com.heima.model.user.pojos.ApUser;
 import com.heima.utils.thread.ApThreadLocalUtil;

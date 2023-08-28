@@ -7,8 +7,9 @@ public interface ApLikesBehaviorService {
 
     /**
      * 存储喜欢数据
+     *
      * @param dto
      * @return
      */
-    public ResponseResult like(LikesBehaviorDto dto);
+    ResponseResult like(LikesBehaviorDto dto);
 }

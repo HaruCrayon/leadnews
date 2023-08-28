@@ -40,7 +40,7 @@ public class MinIOTest {
     public static void main(String[] args) {
         FileInputStream fileInputStream = null;
         try {
-            fileInputStream = new FileInputStream("E:\\tmp\\js\\index.js");
+            fileInputStream = new FileInputStream("E:\\tmp\\js\\axios.min.js");
             //1.创建minio链接客户端
             MinioClient minioClient = MinioClient.builder()
                     .credentials("minio", "minio123")
@@ -48,7 +48,7 @@ public class MinIOTest {
                     .build();
             //2.上传
             PutObjectArgs putObjectArgs = PutObjectArgs.builder()
-                    .object("plugins/js/index.js") //文件名
+                    .object("plugins/js/axios.min.js") //文件名
                     .contentType("text/js") //文件类型
                     .bucket("leadnews") //桶名称  与minio管理界面创建的桶一致
                     .stream(fileInputStream, fileInputStream.available(), -1) //文件流

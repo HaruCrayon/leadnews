@@ -8,13 +8,11 @@ import com.heima.model.behavior.dtos.LikesBehaviorDto;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
 import com.heima.model.user.pojos.ApUser;
-import com.heima.utils.thread.AppThreadLocalUtil;
+import com.heima.utils.thread.ApThreadLocalUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 
 @Service
 @Transactional
@@ -26,14 +24,13 @@ public class ApLikesBehaviorServiceImpl implements ApLikesBehaviorService {
 
     @Override
     public ResponseResult like(LikesBehaviorDto dto) {
-
         //1.检查参数
         if (dto == null || dto.getArticleId() == null || checkParam(dto)) {
             return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID);
         }
 
         //2.是否登录
-        ApUser user = AppThreadLocalUtil.getUser();
+        ApUser user = ApThreadLocalUtil.getUser();
         if (user == null) {
             return ResponseResult.errorResult(AppHttpCodeEnum.NEED_LOGIN);
         }
@@ -49,13 +46,11 @@ public class ApLikesBehaviorServiceImpl implements ApLikesBehaviorService {
             cacheService.hPut(BehaviorConstants.LIKE_BEHAVIOR + dto.getArticleId().toString(), user.getId().toString(), JSON.toJSONString(dto));
         } else {
             // 删除当前key
-            log.info("删除当前key:{}, {}", dto.getArticleId(), user.getId());
+            log.info("删除当前key:{}, {}, {}", dto.getArticleId(), user.getId(), dto);
             cacheService.hDelete(BehaviorConstants.LIKE_BEHAVIOR + dto.getArticleId().toString(), user.getId().toString());
         }
 
-
         return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
-
     }
 
     /**
