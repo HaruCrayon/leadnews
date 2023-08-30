@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.heima.wemedia.mapper.WmNewsMapper">
     <select id="findListAndPage" parameterType="com.heima.model.wemedia.dtos.NewsAuthDto"
-            resultType="com.heima.model.wemedia.vo.WmNewsVo">
+            resultType="com.heima.model.wemedia.vos.WmNewsVo">
         SELECT
         wn.*,wu.`name` authorName
         FROM

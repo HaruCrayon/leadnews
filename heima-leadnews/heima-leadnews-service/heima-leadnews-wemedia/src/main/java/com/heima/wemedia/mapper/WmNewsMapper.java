@@ -3,7 +3,7 @@ package com.heima.wemedia.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.heima.model.wemedia.dtos.NewsAuthDto;
 import com.heima.model.wemedia.pojos.WmNews;
-import com.heima.model.wemedia.vo.WmNewsVo;
+import com.heima.model.wemedia.vos.WmNewsVo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

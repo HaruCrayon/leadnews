@@ -1,5 +1,6 @@
 package com.heima.article.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.heima.article.mapper.ApArticleConfigMapper;
@@ -16,6 +17,7 @@ import com.heima.model.article.dtos.ArticleInfoDto;
 import com.heima.model.article.pojos.ApArticle;
 import com.heima.model.article.pojos.ApArticleConfig;
 import com.heima.model.article.pojos.ApArticleContent;
+import com.heima.model.article.vos.HotArticleVo;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
 import com.heima.model.user.pojos.ApUser;
@@ -51,6 +53,27 @@ public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle
 
     @Autowired
     private ApArticleContentMapper apArticleContentMapper;
+
+    @Autowired
+    private CacheService cacheService;
+
+    /**
+     * 加载文章列表
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public ResponseResult load2(ArticleHomeDto dto) {
+        String jsonStr = cacheService.get(ArticleConstants.HOT_ARTICLE_FIRST_PAGE + dto.getTag());
+        if (StringUtils.isNotBlank(jsonStr)) {
+            List<HotArticleVo> hotArticleVoList = JSON.parseArray(jsonStr, HotArticleVo.class);
+            ResponseResult responseResult = ResponseResult.okResult(hotArticleVoList);
+            return responseResult;
+        }
+
+        return load(dto, ArticleConstants.LOADTYPE_LOAD_MORE);
+    }
 
     /**
      * 加载文章列表
@@ -155,9 +178,6 @@ public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle
         //3.结果返回  文章的id
         return ResponseResult.okResult(apArticle.getId());
     }
-
-    @Autowired
-    private CacheService cacheService;
 
     /**
      * 加载文章详情 数据回显

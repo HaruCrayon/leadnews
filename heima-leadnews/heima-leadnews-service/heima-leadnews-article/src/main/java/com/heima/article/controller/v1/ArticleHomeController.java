@@ -29,7 +29,8 @@ public class ArticleHomeController {
      */
     @PostMapping("/load")
     public ResponseResult load(@RequestBody ArticleHomeDto dto) {
-        return apArticleService.load(dto, ArticleConstants.LOADTYPE_LOAD_MORE);
+//        return apArticleService.load(dto, ArticleConstants.LOADTYPE_LOAD_MORE);
+        return apArticleService.load2(dto);
     }
 
     /**
@@ -52,6 +53,5 @@ public class ArticleHomeController {
     @PostMapping("/loadnew")
     public ResponseResult loadNew(@RequestBody ArticleHomeDto dto) {
         return apArticleService.load(dto, ArticleConstants.LOADTYPE_LOAD_NEW);
-
     }
 }

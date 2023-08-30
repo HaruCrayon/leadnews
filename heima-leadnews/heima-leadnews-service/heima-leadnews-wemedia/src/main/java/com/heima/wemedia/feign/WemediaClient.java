@@ -32,8 +32,8 @@ public class WemediaClient implements IWemediaClient {
     @Autowired
     private WmChannelService wmChannelService;
 
-    @GetMapping("/api/v1/channel/list")
     @Override
+    @GetMapping("/api/v1/channel/list")
     public ResponseResult getChannels() {
         return wmChannelService.findAll();
     }
