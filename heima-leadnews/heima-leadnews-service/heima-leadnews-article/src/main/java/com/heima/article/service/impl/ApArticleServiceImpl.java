@@ -8,6 +8,7 @@ import com.heima.article.mapper.ApArticleContentMapper;
 import com.heima.article.mapper.ApArticleMapper;
 import com.heima.article.service.ApArticleService;
 import com.heima.article.service.ArticleFreemarkerService;
+import com.heima.article.service.HotArticleService;
 import com.heima.common.constants.ArticleConstants;
 import com.heima.common.constants.BehaviorConstants;
 import com.heima.common.redis.CacheService;
@@ -20,6 +21,7 @@ import com.heima.model.article.pojos.ApArticleContent;
 import com.heima.model.article.vos.HotArticleVo;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
+import com.heima.model.mess.ArticleVisitStreamMess;
 import com.heima.model.user.pojos.ApUser;
 import com.heima.utils.thread.ApThreadLocalUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -29,10 +31,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author LiJing
@@ -228,4 +228,93 @@ public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle
 
         return ResponseResult.okResult(resultMap);
     }
+
+    @Autowired
+    private HotArticleService hotArticleService;
+
+    /**
+     * 更新文章的分值  同时更新缓存中的热点文章数据
+     *
+     * @param mess
+     */
+    @Override
+    public void updateScore(ArticleVisitStreamMess mess) {
+        //1.更新文章的阅读、点赞、收藏、评论的数量
+        ApArticle apArticle = updateArticle(mess);
+
+        //2.计算文章的分值
+        Integer score = hotArticleService.computeScore(apArticle);
+        score *= 3;//当日热度的权重整体*3
+
+        //3.替换当前文章对应频道的热点数据
+        replaceDataToRedis(apArticle, score, ArticleConstants.HOT_ARTICLE_FIRST_PAGE + apArticle.getChannelId());
+
+        //4.替换推荐对应的热点数据
+        replaceDataToRedis(apArticle, score, ArticleConstants.HOT_ARTICLE_FIRST_PAGE + ArticleConstants.DEFAULT_TAG);
+    }
+
+    /**
+     * 更新文章行为的数量
+     *
+     * @param mess
+     */
+    private ApArticle updateArticle(ArticleVisitStreamMess mess) {
+        ApArticle apArticle = getById(mess.getArticleId());
+        apArticle.setCollection(apArticle.getCollection() == null ? 0 : apArticle.getCollection() + mess.getCollect());
+        apArticle.setComment(apArticle.getComment() == null ? 0 : apArticle.getComment() + mess.getComment());
+        apArticle.setLikes(apArticle.getLikes() == null ? 0 : apArticle.getLikes() + mess.getLike());
+        apArticle.setViews(apArticle.getViews() == null ? 0 : apArticle.getViews() + mess.getView());
+        updateById(apArticle);
+
+        return apArticle;
+    }
+
+    /**
+     * 替换数据并且存入到redis
+     *
+     * @param apArticle
+     * @param score
+     * @param tag
+     */
+    private void replaceDataToRedis(ApArticle apArticle, Integer score, String tag) {
+        String articleListStr = cacheService.get(tag);
+        if (StringUtils.isNotBlank(articleListStr)) {
+            List<HotArticleVo> hotArticleVoList = JSON.parseArray(articleListStr, HotArticleVo.class);
+
+            boolean flag = true;
+            //如果缓存中存在该文章，只更新分值
+            for (HotArticleVo hotArticleVo : hotArticleVoList) {
+                if (hotArticleVo.getId().equals(apArticle.getId())) {
+                    hotArticleVo.setScore(score);
+                    flag = false;
+                    break;
+                }
+            }
+
+            //如果缓存中不存在，查询缓存中分值最小的一条数据，进行分值的比较，如果当前文章的分值大于缓存中的数据，就替换
+            if (flag) {
+                if (hotArticleVoList.size() >= 30) {
+                    hotArticleVoList = hotArticleVoList.stream().sorted(Comparator.comparing(HotArticleVo::getScore).reversed()).collect(Collectors.toList());
+                    HotArticleVo lastHot = hotArticleVoList.get(hotArticleVoList.size() - 1);
+                    if (lastHot.getScore() < score) {
+                        hotArticleVoList.remove(lastHot);
+                        HotArticleVo hot = new HotArticleVo();
+                        BeanUtils.copyProperties(apArticle, hot);
+                        hot.setScore(score);
+                        hotArticleVoList.add(hot);
+                    }
+                } else {
+                    HotArticleVo hot = new HotArticleVo();
+                    BeanUtils.copyProperties(apArticle, hot);
+                    hot.setScore(score);
+                    hotArticleVoList.add(hot);
+                }
+            }
+
+            //缓存到redis
+            hotArticleVoList = hotArticleVoList.stream().sorted(Comparator.comparing(HotArticleVo::getScore).reversed()).collect(Collectors.toList());
+            cacheService.set(tag, JSON.toJSONString(hotArticleVoList));
+        }
+    }
+
 }

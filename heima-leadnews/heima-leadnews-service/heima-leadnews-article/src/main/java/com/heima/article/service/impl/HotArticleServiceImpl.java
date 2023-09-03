@@ -40,7 +40,7 @@ public class HotArticleServiceImpl implements HotArticleService {
     @Override
     public void computeHotArticle() {
         //1.查询前5天的文章数据
-        Date dateParam = DateTime.now().minusDays(2000).toDate();
+        Date dateParam = DateTime.now().minusDays(5).toDate();
         List<ApArticle> apArticleList = apArticleMapper.findArticleListByLast5days(dateParam);
 
         //2.计算文章的分值
@@ -78,7 +78,7 @@ public class HotArticleServiceImpl implements HotArticleService {
      * @param apArticle
      * @return
      */
-    private Integer computeScore(ApArticle apArticle) {
+    public Integer computeScore(ApArticle apArticle) {
         Integer score = 0;
         if (apArticle.getLikes() != null) {
             score += apArticle.getLikes() * ArticleConstants.HOT_ARTICLE_LIKE_WEIGHT;
